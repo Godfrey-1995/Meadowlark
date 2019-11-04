@@ -1,5 +1,6 @@
 var express = require('express');
 var app = express();
+var fortune = require('./lib/fortune.js');
 var handlebars = require('express3-handlebars')
     .create({defaultLayout: 'main'});
 app.engine('handlebars', handlebars.engine);
@@ -32,8 +33,7 @@ let fortunes = [
 
 //定制关于页面
 app.get('/about', function (req, res) {
-    let randmFortune = fortunes[Math.floor(Math.random() * fortunes.length)];
-    res.render('about', {fortune: randmFortune});
+    res.render('about', {fortune: fortune.getFortune()});
 });
 
 // 定制404界面
