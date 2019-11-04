@@ -7,37 +7,45 @@ app.set('view engine', 'handlebars');
 
 app.set('port', process.env.PORT || 8888);
 
+// 测试
+app.use(function (req, res, next) {
+    let show_tests = app.get('env') !== 'production' && req.query.test === '1';
+   res.locals.showTests = show_tests;
+   next();
+});
+
 //访问静态资源
 app.use(express.static(__dirname + '/public'));
 
 //定制首页
 app.get('/', function (req, res) {
-    // res.type('text/plain');
-    // res.send('Meadowlark Travel');
     res.render('home');
 });
 
+let fortunes = [
+    "Conquer your fears or they will conquer you.",
+    "Rivers need springs.",
+    "Do not fear what you don't know.",
+    "You will have a pleasant surprise.",
+    "Whenever possible, keep it simple."
+];
+
 //定制关于页面
 app.get('/about', function (req, res) {
-    // res.type('text/plain');
-    // res.send('About Meadowlark Travel');
-    res.render('about')
+    let randmFortune = fortunes[Math.floor(Math.random() * fortunes.length)];
+    res.render('about', {fortune: randmFortune});
 });
 
 // 定制404界面
 app.use(function (req, res) {
-    // res.type('text/plain');
     res.status(404);
-    // res.send('404 - Not found');
     res.render('404');
 });
 
 // 定制500界面
 app.use(function (err, req, res, next) {
     console.error(err.stack);
-    // res.type('text/plain');
     res.status(500);
-    // res.send('500 - Server Error');
     res.render('500');
 });
 
