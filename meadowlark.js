@@ -3,7 +3,14 @@ var app = express();
 var fortune = require('./lib/fortune.js');
 var tours = require('./lib/tours');
 var handlebars = require('express3-handlebars')
-    .create({defaultLayout: 'main'});
+    .create({defaultLayout: 'main',
+        helpers: {
+            section: function(name, options){
+                if(!this._sections) this._sections = {};
+                this._sections[name] = options.fn(this);
+                return null;
+            }
+        }});
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
 
@@ -35,6 +42,25 @@ app.get('/', function (req, res) {
 //定制关于页面
 app.get('/about', function (req, res) {
     res.render('about', {fortune: fortune.getFortune()});
+});
+
+app.get('/jquerytest', function(req, res){
+    res.render('jquerytest');
+});
+
+app.get('/nursery-rhyme', function(req, res){
+    console.log('111111111')
+    res.render('nursery-rhyme');
+});
+
+app.get('/data/nursery-rhyme', function(req, res){
+    console.log('222222222')
+    res.json({
+        animal: 'squirrel',
+        bodyPart: 'tail',
+        adjective: 'bushy',
+        noun: 'heck',
+    });
 });
 
 // 提供一个api
@@ -82,7 +108,7 @@ app.put('/api/tour/:id', function (req, res) {
     }
 });
 
-app.del('/api/tour/:id', function(req, res){
+app.delete('/api/tour/:id', function(req, res){
     var i;
     for( var i=tours.getTours().length-1; i>=0; i-- )
         if( tours[i].id == req.params.id ) break;
