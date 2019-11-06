@@ -49,12 +49,10 @@ app.get('/jquerytest', function(req, res){
 });
 
 app.get('/nursery-rhyme', function(req, res){
-    console.log('111111111')
     res.render('nursery-rhyme');
 });
 
 app.get('/data/nursery-rhyme', function(req, res){
-    console.log('222222222')
     res.json({
         animal: 'squirrel',
         bodyPart: 'tail',

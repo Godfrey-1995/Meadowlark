@@ -14,29 +14,29 @@
 
 {{#section 'jquery'}}
     <script>
-        $('document').ready(function(){
-            var nurseryRhymeTemplate = Handlebars.compile($('nurseryRhymeTemplate').html());
+        $(document).ready(function(){
+                var nurseryRhymeTemplate = Handlebars.compile($('#nurseryRhymeTemplate').html());
 
-            var $nurseryRhyme = $('#nurseryRhyme');
+                var $nurseryRhyme = $('#nurseryRhyme');
 
-            $('btnNurseryRhyme').on('click', function(event) {
-                event.preventDefault();
-                $nurseryRhyme.html(nurseryRhymeTemplate({
-                    animal: 'basilisk',
-                    bodyPart: 'tall',
-                    adjective: 'sharp',
-                    noun: 'a needle'
-                }))
-            });
+                $('#btnNurseryRhyme').on('click', function(event) {
+                    event.preventDefault();
+                    $nurseryRhyme.html(nurseryRhymeTemplate({
+                        animal: 'basilisk',
+                        bodyPart: 'tall',
+                        adjective: 'sharp',
+                        noun: 'a needle'
+                    }))
+                });
 
-            $('btnNurseryRhymeAjax').on('click', function(event) {
-                event.preventDefault();
-                $.ajax('/data/nursery-rhyme', {
-                    success: function(data) {
-                        $nurseryRhyme.html(nurseryRhymeTemplate(data));
-                    }
+                $('#btnNurseryRhymeAjax').on('click', function(event) {
+                    event.preventDefault();
+                    $.ajax('/data/nursery-rhyme', {
+                        success: function(data) {
+                            $nurseryRhyme.html(nurseryRhymeTemplate(data));
+                        }
+                    })
                 })
-            })
         })
     </script>
 {{/section}}
