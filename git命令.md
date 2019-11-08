@@ -13,3 +13,6 @@
   * git fetch origin master     从远程origin仓库的master分支下载代码到本地的origin master
   * git log -p master.. origin/master    比较本地仓库与远程仓库的区别
   * git merge origin/master    把远程仓库的代码合并到本地仓库
+* 将代码从本地仓库删除
+  * git rm "文件名" 	同时从工作区与本地仓库中删除文件
+  * git rm --cache "文件名"       从本地仓库删除文件
