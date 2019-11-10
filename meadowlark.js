@@ -5,6 +5,7 @@ var bodyParser = require('body-parser');
 var fortune = require('./lib/fortune.js');
 var formidable = require('formidable');
 var credentials = require('./credentials');
+var email = require('./lib/email');
 var tours = require('./lib/tours');
 var handlebars = require('express3-handlebars')
     .create({defaultLayout: 'main',
@@ -27,6 +28,8 @@ app.use(require('express-session')({
     saveUninitialized: false,
     secret: credentials.cookieSecret,
 }));
+
+
 
 // 测试
 app.use(function (req, res, next) {
@@ -174,6 +177,19 @@ app.get('/data/nursery-rhyme', function(req, res){
     });
 });
 
+// 邮件页面
+app.get('/email', function (req, res) {
+    res.render('emailTest');
+});
+
+// 发送邮件
+app.post('/send-email', function (req, res) {
+    let to = 'do123dixia@163.com';
+    let subj = 'Hello';
+    let text = 'This is a test email';
+    email.send({to: to, subject:subj, text: text});
+});
+
 // 提供一个api
 app.get('/api/tours', function (req, res) {
     // 拼接xml
@@ -245,6 +261,6 @@ app.use(function (err, req, res, next) {
 });
 
 app.listen(app.get('port'), function () {
-    console.log('Express started on http://127.0.0.1:' +
+    console.log('Express started in ' + app.get('env') + ' mode on http://127.0.0.1:' +
     app.get('port') + '; press Ctrl-C to terminate');
 });
