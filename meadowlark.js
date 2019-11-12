@@ -7,6 +7,61 @@ var formidable = require('formidable');
 var credentials = require('./credentials');
 var email = require('./lib/email');
 var tours = require('./lib/tours');
+var VacationInSeasonListener = require('./models/vacationInSeasonListener');
+
+// 连接数据库
+var mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost/meadowlark_db', { useNewUrlParser: true, useUnifiedTopology: true }, (err, res)=>{
+    if (err) return console.log(err);
+});
+var Vacation = require('./models/vacation.js');
+
+Vacation.find(function(err, vacations){
+    if(vacations.length) return;
+    new Vacation({
+        name: 'Hood River Day Trip',
+        slug: 'hood-river-day-trip',
+        category: 'Day Trip',
+        sku: 'HR199',
+        description: 'Spend a day sailing on the Columbia and ' +
+            'enjoying craft beers in Hood River!',
+        priceInCents: 9995,
+        tags: ['day trip', 'hood river', 'sailing', 'windsurfing', 'breweries'],
+        inSeason: true,
+        maximumGuests: 16,
+        available: true,
+        packagesSold: 0,
+    }).save();
+    new Vacation({
+        name: 'Oregon Coast Getaway',
+        slug: 'oregon-coast-getaway',
+        category: 'Weekend Getaway',
+        sku: 'OC39',
+        description: 'Enjoy the ocean air and quaint coastal towns!',
+        priceInCents: 269995,
+        tags: ['weekend getaway', 'oregon coast', 'beachcombing'],
+        inSeason: false,
+        maximumGuests: 8,
+        available: true,
+        packagesSold: 0,
+}).save();
+    new Vacation({
+        name: 'Rock Climbing in Bend',
+        slug: 'rock-climbing-in-bend',
+        category: 'Adventure',
+        sku: 'B99',
+        description: 'Experience the thrill of climbing in the high desert.',
+        priceInCents: 289995,
+        tags: ['weekend getaway', 'bend', 'high desert', 'rock climbing'],
+        inSeason: true,
+        requiresWaiver: true,
+        maximumGuests: 4,
+        available: false,
+        packagesSold: 0,
+        notes: 'The tour guide is currently recovering from a skiing accident.',
+    }).save();
+});
+
 var handlebars = require('express3-handlebars')
     .create({defaultLayout: 'main',
         helpers: {
@@ -54,6 +109,106 @@ app.get('/headers', function (req, res) {
     }
     res.render('headers', {headers_content: headers_content});
 });
+
+app.get('/vacations', function (req, res) {
+    Vacation.find({available: true}, function (err, vacations) {
+        var context = {
+            vacation: vacations.map(function (vacation) {
+                return {
+                    sku: vacation.sku,
+                    name: vacation.name,
+                    description: vacation.description,
+                    price: vacation.getDisplayPrice(),
+                    inSeason: vacation.inSeason,
+                }
+            })
+        }
+        res.render('vacations', context);
+    })
+});
+
+app.post('/vacations', function (req, res) {
+    Vacation.findOne({sku: req.body.purchaseSku}, function (err, vacation) {
+        if(err || !vacation) {
+            req.session.flash = {
+                type: 'warning',
+                intro: 'Ooops!',
+                message: 'Something went wrong with your reservation; ' +
+                    'please <a href="/contact">contact us</a>.',
+            };
+            return res.redirect(303, '/vacations');
+        }
+        vacation.packagesSold++;
+        vacation.save();
+        req.session.flash = {
+            type: 'success',
+            intro: 'Thank you!',
+            message: 'Your vacation has been booked.',
+        };
+        res.redirect(303, '/vacations');
+    })
+});
+
+app.get('/cart/add', function (req, res, next) {
+    var cart = req.session.cart || (req.session.cart = { item: []})
+    Vacation.findOne({sku: req.query.sku}, function (err, vacation) {
+        if (err) return next(err);
+        if (!vacation) return next(new Error('Unknown vacation SKU: ' + req.query.sku));
+        cart.item.push({
+            vacation: vacation,
+            guests: req.body.guests || 1,
+        });
+        res.redirect(303, '/cart');
+    })
+});
+
+app.post('/cart/add', function (req, res, next) {
+    var cart = req.session.cart || (req.session.cart = { item: []})
+    Vacation.findOne({sku: req.body.sku}, function (err, vacation) {
+        if (err) return next(err);
+        if (!vacation) return next(new Error('Unknown vacation SKU: ' + req.body.sku));
+        cart.item.push({
+            vacation: vacation,
+            guests: req.body.guests || 1,
+        });
+        res.redirect(303, '/cart');
+    })
+});
+
+app.get('/cart', function (req, res) {
+    var cart = req.session.cart;
+    if(!cart) next();
+    res.render('cart', { cart: cart });
+});
+
+app.get('/notify-me-when-in-season', function (req, res, next) {
+    res.render('notify-me-when-in-season', {sku: req.query.sku});
+});
+
+app.post('/notify-me-when-in-season', function (req, res, next) {
+    VacationInSeasonListener.update(
+        {email: req.body.email},
+        {$push: { skus: req.body.sku }},
+        {upsert: true}, 
+        function (err) {
+            if(err) {
+                console.error(err.stack);
+                req.session.flash = {
+                    type: 'danger',
+                    intro: 'Ooops!',
+                    message: 'There was an error processing your request.',
+                };
+                return res.redirect(303, '/vacations');
+            }
+            req.session.flash = {
+                type: 'success',
+                intro: 'Thank you!',
+                message: 'You will be notified when this vacation is in season.',
+            };
+            return res.redirect(303, '/vacations');
+        });
+});
+// =============================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 //定制首页
 app.get('/', function (req, res) {
